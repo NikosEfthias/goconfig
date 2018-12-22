@@ -9,9 +9,14 @@ import (
 
 var _defaults = map[string]string{}
 var _l sync.Mutex
+var _loaded bool
 
 //Load load the initial config
 func Load(defaults map[string]string) error { //{{{
+	if _loaded {
+		return nil
+	}
+	_loaded = true
 	f, err := os.Open("conf.json")
 	if nil != err {
 		switch {
@@ -42,6 +47,7 @@ func Get(k string) string { //{{{
 	if d := os.Getenv(k); d != "" {
 		return d
 	}
+	Load(_defaults)
 	_l.Lock()
 	defer _l.Unlock()
 	return _defaults[k]
