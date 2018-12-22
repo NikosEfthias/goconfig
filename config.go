@@ -57,3 +57,11 @@ func Set(k, v string) { //{{{
 	_l.Unlock()
 	_write_config()
 } //}}}
+func Get_or_set(k, v string) string { //{{{
+	val := Get(k)
+	if "" != val {
+		return val
+	}
+	go Set(k, v)
+	return v
+} //}}}
