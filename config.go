@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"sync"
 )
 
-var _defaults map[string]string
+var _defaults = map[string]string{}
+var _l sync.Mutex
 
 //Load load the initial config
 func Load(defaults map[string]string) error { //{{{
@@ -14,8 +16,7 @@ func Load(defaults map[string]string) error { //{{{
 	if nil != err {
 		switch {
 		case os.IsNotExist(err):
-			d, _ := json.MarshalIndent(defaults, "", "	")
-			err := ioutil.WriteFile("conf.json", d, 0644)
+			err := _write_config()
 			if nil != err {
 				return err
 			}
@@ -37,5 +38,22 @@ func Get(k string) string { //{{{
 	if d := os.Getenv(k); d != "" {
 		return d
 	}
+	_l.Lock()
+	defer _l.Unlock()
 	return _defaults[k]
+} //}}}
+func _write_config() error { //{{{
+	_l.Lock()
+	defer _l.Unlock()
+	d, err := json.MarshalIndent(_defaults, "", " ")
+	if nil != err {
+		return err
+	}
+	return ioutil.WriteFile("conf.json", d, 0644)
+} //}}}
+func Set(k, v string) { //{{{
+	_l.Lock()
+	_defaults[k] = v
+	_l.Unlock()
+	_write_config()
 } //}}}
