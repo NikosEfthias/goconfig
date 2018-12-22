@@ -23,11 +23,15 @@ func Load(defaults map[string]string) error { //{{{
 		default:
 			return err
 		}
+		_l.Lock()
 		_defaults = defaults
+		_l.Unlock()
 		return nil
 	}
 	defer f.Close()
+	_l.Lock()
 	err = json.NewDecoder(f).Decode(&_defaults)
+	_l.Unlock()
 	if nil != err {
 		return err
 	}
@@ -52,6 +56,7 @@ func _write_config() error { //{{{
 	return ioutil.WriteFile("conf.json", d, 0644)
 } //}}}
 func Set(k, v string) { //{{{
+	Load(_defaults)
 	_l.Lock()
 	_defaults[k] = v
 	_l.Unlock()
